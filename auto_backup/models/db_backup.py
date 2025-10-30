@@ -7,6 +7,7 @@
 import logging
 import os
 import shutil
+import tempfile
 import traceback
 from contextlib import contextmanager
 from datetime import datetime, timedelta
@@ -21,6 +22,23 @@ try:
 except ImportError:  # pragma: no cover
     _logger.debug('Cannot import pysftp')
 
+# Set custom temporary directory
+CUSTOM_TMP_DIR = '/mnt/HC_Volume_103825897/tmp'
+
+# Ensure the custom tmp directory exists
+if not os.path.exists(CUSTOM_TMP_DIR):
+    try:
+        os.makedirs(CUSTOM_TMP_DIR, mode=0o700)
+        _logger.info("Created custom temporary directory: %s", CUSTOM_TMP_DIR)
+    except Exception as e:
+        _logger.warning("Could not create %s: %s. Falling back to system temp.", 
+                       CUSTOM_TMP_DIR, e)
+        CUSTOM_TMP_DIR = None
+
+# Override tempfile default directory if our custom directory exists
+if CUSTOM_TMP_DIR and os.path.isdir(CUSTOM_TMP_DIR):
+    tempfile.tempdir = CUSTOM_TMP_DIR
+    _logger.info("Set tempfile.tempdir to: %s", CUSTOM_TMP_DIR)
 
 class DbBackup(models.Model):
     _description = 'Database Backup'
